@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+    <gresource prefix="/com/github/bmreading/dragontap">
+        <file preprocess="xml-stripblanks">ui/dt-window.ui</file>
+        <file preprocess="xml-stripblanks">ui/dt-row.ui</file>
+    </gresource>
+</gresources>
