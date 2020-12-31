@@ -1,7 +1,8 @@
 sources = [
-    'wt-application.c',
-    'wt-window.c',
-    'wt-network-manager.c',
+    'dt-application.c',
+    'dt-window.c',
+    'dt-network-manager.c',
+    'dt-row.c',
     'main.c'
 ]
 
@@ -12,7 +13,7 @@ dependencies = [
 
 executable(
     meson.project_name(),
-    wt_resources,
+    dt_resources,
     sources: sources,
     dependencies: dependencies
 )

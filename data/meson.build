@@ -1,6 +1,6 @@
-wt_resources = gnome.compile_resources(
-    'wt-resources',
-    'wt.gresource.xml',
+dt_resources = gnome.compile_resources(
+    'dt-resources',
+    'dt.gresource.xml',
     source_dir: '.',
-    c_name: 'wt',
+    c_name: 'dt',
 )

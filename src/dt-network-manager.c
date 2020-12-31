@@ -1,37 +1,34 @@
-#include "wt-network-manager.h"
-#include <stdbool.h>
+#include "dt-network-manager.h"
 #include <stdio.h>
 
-struct _WtNetworkManager
+struct _DtNetworkManager
 {
     GObject parent_instance;
 };
 
-G_DEFINE_TYPE (WtNetworkManager, wt_network_manager, G_TYPE_OBJECT)
+G_DEFINE_TYPE (DtNetworkManager, dt_network_manager, G_TYPE_OBJECT)
 
 static void
-wt_network_manager_class_init (WtNetworkManagerClass *klass)
+dt_network_manager_class_init (DtNetworkManagerClass *klass)
 {
 }
 
 static void
-wt_network_manager_init (WtNetworkManager *self)
+dt_network_manager_init (DtNetworkManager *self)
 {
 }
 
-WtNetworkManager
-*wt_network_manager_new (void)
+DtNetworkManager
+*dt_network_manager_new (void)
 {
-    return g_object_new (WT_TYPE_NETWORK_MANAGER,
+    return g_object_new (DT_NETWORK_MANAGER_TYPE,
                          0);
 }
 
 GPtrArray
-*wt_network_manager_get_wireguard_connections (WtNetworkManager *self)
+*dt_network_manager_get_wireguard_connections (DtNetworkManager *self)
 {
-    NMClient *client;
-    
-	client = nm_client_new (NULL, NULL);
+    NMClient *client = nm_client_new (NULL, NULL);
     const GPtrArray *connections = nm_client_get_connections (client);
     
     GPtrArray *wireguard_connections = g_ptr_array_new ();
@@ -41,7 +38,7 @@ GPtrArray
         
         if (nm_connection_is_type (connection, "wireguard") == 1) {
             
-            bool is_active = wt_network_manager_is_connection_active (self, connection);
+            gboolean is_active = dt_network_manager_is_connection_active (self, connection);
             
             printf("%s WireGuard connection with id %s found.\n",
                     is_active ? "Active" : "Inactive",
@@ -50,12 +47,15 @@ GPtrArray
             g_ptr_array_add (wireguard_connections, connection);
         }
     }
-    
+
+    //g_object_unref (client);
+    g_ptr_array_unref ((GPtrArray *)connections);
+
     return wireguard_connections;
 }
 
-bool
-wt_network_manager_is_connection_active (WtNetworkManager *self,
+gboolean
+dt_network_manager_is_connection_active (DtNetworkManager *self,
                                          NMConnection     *connection)
 {
     NMClient *client = nm_client_new (NULL, NULL);
@@ -75,15 +75,17 @@ wt_network_manager_is_connection_active (WtNetworkManager *self,
             nm_connection_get_id (connection);
         
         if (strcmp (active_connection_id, connection_id) == 0) {
-            return true;
+            return TRUE;
         }
     }
+
+    g_object_unref (client);
     
-    return false;
+    return FALSE;
 }
 
 NMActiveConnection
-*wt_network_manager_get_active_connection_by_connection (NMConnection *connection)
+*dt_network_manager_get_active_connection_by_connection (NMConnection *connection)
 {
     NMClient *client = nm_client_new (NULL, NULL);
     
@@ -106,72 +108,83 @@ NMActiveConnection
         }
     }
 
+    g_ptr_array_unref ((GPtrArray *)active_connections);
+    g_object_unref (client);
+
     return NULL;
 }
 
 void
-wt_network_manager_toggle_wireguard_callback (NMClient         *client,
-                                              GAsyncResult     *result,
-                                              WtNetworkManager *self)
+dt_network_manager_deactivate_wireguard_callback (NMClient         *client,
+                                                  GAsyncResult     *result,
+                                                  DtNetworkManager *self)
 {
     GError *error = NULL;
     
     // Finish the operation
     if (!nm_client_deactivate_connection_finish (client, result, &error))
+    {
         g_warning ("Deactivating connection: %s", error->message);
+        g_error_free (error);
+    }
     else
         g_debug ("Deactivated connection successfully");
-    
-    g_error_free (error);
 }
 
+void
+dt_network_manager_activate_wireguard_callback (NMClient         *client,
+                                                GAsyncResult     *result,
+                                                DtNetworkManager *self)
+{
+    GError *error = NULL;
+    
+    // Finish the operation
+    if (!nm_client_activate_connection_finish (client, result, &error))
+    {
+        g_warning ("Activating connection: %s", error->message);
+        g_error_free (error);
+    }
+    else
+        g_debug ("Activated connection successfully");
+}
 
 void
-wt_network_manager_toggle_wireguard (WtNetworkManager *self,
-                                     NMConnection     *connection,
-                                     enum toggle_type  tog)
-{
-    char tog_type[4];
-    if(tog == 1) {
-        strcpy(tog_type, "On");
-    }
-    else {
-        strcpy(tog_type, "Off");
-    }
-    printf("Wireguard Should be Toggled as %s\n", tog_type);
-    
+dt_network_manager_toggle_wireguard (DtNetworkManager *self,
+                                     NMConnection     *connection)
+{   
     NMClient *client = nm_client_new (NULL, NULL);
 
-    bool is_active = 
-        wt_network_manager_is_connection_active (self,
+    const gboolean is_active = 
+        dt_network_manager_is_connection_active (self,
                                                 connection);
 
-    if ((is_active == true) && (tog == 0))
+    if (is_active)
     {
         printf("Found an active connection that was asked to be toggled off\n");
 
         NMActiveConnection *active_connection = 
-            wt_network_manager_get_active_connection_by_connection (connection);
+            dt_network_manager_get_active_connection_by_connection (connection);
 
-        
         nm_client_deactivate_connection_async (client,
                                                active_connection,
                                                NULL,
-                                               (GAsyncReadyCallback) wt_network_manager_toggle_wireguard_callback,
+                                               (GAsyncReadyCallback) dt_network_manager_deactivate_wireguard_callback,
                                                self);
-
-        // bool damn = 1;
-        // damn = nm_client_deactivate_connection (client, active_connection, NULL, NULL);
     }
-    else if ((is_active == false) && (tog == 1))
+
+    else if (!is_active)
     {
+        printf("Found an inactive connection that was asked to be toggled on\n");
+
         nm_client_activate_connection_async (client,
                                              connection,
                                              NULL,
                                              NULL,
                                              NULL,
-                                             NULL,
-                                             NULL);
+                                             (GAsyncReadyCallback) dt_network_manager_activate_wireguard_callback,
+                                             self);
     }
+
+    g_object_unref (client);
 }
 
