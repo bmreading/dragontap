@@ -13,4 +13,4 @@ DtRow *dt_row_new (NMConnection *connection);
 
 G_END_DECLS
 
-#endif /* WT_ROW_H */
+#endif /* DT_ROW_H */
