@@ -1,5 +1,5 @@
 project(
-  'wireguard-toggle', 'c'
+  'dragontap', 'c'
 )
 
 gtk_dep = dependency('gtk+-3.0')
