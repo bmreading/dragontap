@@ -1,3 +1,22 @@
+/**
+ * Copyright (C) 2020 Brian Reading
+ * 
+ * This file is part of DragonTap.
+ * 
+ * DragonTap is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * DragonTap is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU General Public License
+ * along with DragonTap.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
 #include "dt-network-manager.h"
 #include <stdio.h>
 
@@ -160,7 +179,7 @@ dt_network_manager_toggle_wireguard (DtNetworkManager *self,
 
     if (is_active)
     {
-        printf("Found an active connection that was asked to be toggled off\n");
+        printf("Active connection was asked to be toggled off");
 
         NMActiveConnection *active_connection = 
             dt_network_manager_get_active_connection_by_connection (connection);
@@ -174,7 +193,7 @@ dt_network_manager_toggle_wireguard (DtNetworkManager *self,
 
     else if (!is_active)
     {
-        printf("Found an inactive connection that was asked to be toggled on\n");
+        g_warning("Inactive connection was asked to be toggled on");
 
         nm_client_activate_connection_async (client,
                                              connection,
