@@ -1,5 +1,8 @@
 project(
-  'dragontap', 'c'
+  'dragontap',
+  'c',
+  version: '0.1',
+  license: 'GPL3+',
 )
 
 gtk_dep = dependency('gtk+-3.0')
