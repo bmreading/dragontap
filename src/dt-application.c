@@ -38,8 +38,38 @@ dt_application_activate (GApplication *app)
 }
 
 static void
+dt_application_show_about (GSimpleAction *action,
+                           GVariant      *parameter,
+                           gpointer       user_data)
+{
+    GdkPixbuf *app_logo = gdk_pixbuf_new_from_file ("data/icons/hicolor/scalable/apps/dt.svg",
+                                                     NULL);
+
+    GdkPixbuf *app_logo_scaled = gdk_pixbuf_scale_simple (app_logo,
+                                                          125, 125,
+                                                          GDK_INTERP_BILINEAR);
+
+    GtkAboutDialog *about_dialog = GTK_ABOUT_DIALOG (gtk_about_dialog_new ());
+    gtk_about_dialog_set_program_name (about_dialog, "DragonTap");
+    gtk_about_dialog_set_copyright (about_dialog, "© 2020 Brian Reading");
+    gtk_about_dialog_set_license_type (about_dialog, GTK_LICENSE_GPL_3_0),
+    gtk_about_dialog_set_logo (about_dialog, app_logo_scaled);
+    gtk_about_dialog_set_version (about_dialog, "0.1"),
+    gtk_about_dialog_set_comments (about_dialog, "A graphical interface for "
+                                                 "WireGuard connections \n"
+                                                 "configured by NetworkManager.");
+
+    gtk_dialog_run (GTK_DIALOG (about_dialog));
+}
+
+static GActionEntry app_entries[] = {
+  { "about", dt_application_show_about, NULL, NULL, NULL }
+};
+
+static void
 dt_application_init (DtApplication *app)
 {
+    g_action_map_add_action_entries (G_ACTION_MAP (app), app_entries, G_N_ELEMENTS (app_entries), app);
 }
 
 static void
