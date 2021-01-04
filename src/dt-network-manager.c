@@ -23,18 +23,44 @@
 struct _DtNetworkManager
 {
     GObject parent_instance;
+
+    NMClient *client;
 };
 
 G_DEFINE_TYPE (DtNetworkManager, dt_network_manager, G_TYPE_OBJECT)
 
 static void
+dt_network_manager_dispose (GObject *object)
+{
+    DtNetworkManager *self = DT_NETWORK_MANAGER (object);
+    g_clear_object (&self->client);
+
+    G_OBJECT_CLASS (dt_network_manager_parent_class)->dispose (object);
+}
+
+static void
+dt_network_manager_finalize (GObject *object)
+{
+    DtNetworkManager *self = DT_NETWORK_MANAGER (object);
+
+    g_free (self->client);
+
+    G_OBJECT_CLASS (dt_network_manager_parent_class)->finalize (object);
+}
+
+static void
 dt_network_manager_class_init (DtNetworkManagerClass *klass)
 {
+    GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+    object_class->dispose = dt_network_manager_dispose;
+    object_class->finalize = dt_network_manager_finalize;
 }
 
 static void
 dt_network_manager_init (DtNetworkManager *self)
 {
+    self->client = nm_client_new (NULL, NULL);
 }
 
 DtNetworkManager
@@ -47,8 +73,9 @@ DtNetworkManager
 GPtrArray
 *dt_network_manager_get_wireguard_connections (DtNetworkManager *self)
 {
-    NMClient *client = nm_client_new (NULL, NULL);
-    const GPtrArray *connections = nm_client_get_connections (client);
+    //NMClient *client = nm_client_new (NULL, NULL);
+
+    const GPtrArray *connections = nm_client_get_connections (self->client);
     
     GPtrArray *wireguard_connections = g_ptr_array_new ();
     
@@ -77,10 +104,10 @@ gboolean
 dt_network_manager_is_connection_active (DtNetworkManager *self,
                                          NMConnection     *connection)
 {
-    NMClient *client = nm_client_new (NULL, NULL);
+    //NMClient *client = nm_client_new (NULL, NULL);
     
     const GPtrArray *active_connections = 
-        nm_client_get_active_connections (client);
+        nm_client_get_active_connections (self->client);
     
     for (int i = 0; i < active_connections[0].len; i++)
     {
@@ -98,7 +125,7 @@ dt_network_manager_is_connection_active (DtNetworkManager *self,
         }
     }
 
-    g_object_unref (client);
+    //g_object_unref (client);
     
     return FALSE;
 }
@@ -171,7 +198,7 @@ void
 dt_network_manager_toggle_wireguard (DtNetworkManager *self,
                                      NMConnection     *connection)
 {   
-    NMClient *client = nm_client_new (NULL, NULL);
+    //NMClient *client = nm_client_new (NULL, NULL);
 
     const gboolean is_active = 
         dt_network_manager_is_connection_active (self,
@@ -184,7 +211,7 @@ dt_network_manager_toggle_wireguard (DtNetworkManager *self,
         NMActiveConnection *active_connection = 
             dt_network_manager_get_active_connection_by_connection (connection);
 
-        nm_client_deactivate_connection_async (client,
+        nm_client_deactivate_connection_async (self->client,
                                                active_connection,
                                                NULL,
                                                (GAsyncReadyCallback) dt_network_manager_deactivate_wireguard_callback,
@@ -195,7 +222,7 @@ dt_network_manager_toggle_wireguard (DtNetworkManager *self,
     {
         g_warning("Inactive connection was asked to be toggled on");
 
-        nm_client_activate_connection_async (client,
+        nm_client_activate_connection_async (self->client,
                                              connection,
                                              NULL,
                                              NULL,
@@ -204,6 +231,6 @@ dt_network_manager_toggle_wireguard (DtNetworkManager *self,
                                              self);
     }
 
-    g_object_unref (client);
+    //g_object_unref (client);
 }
 
