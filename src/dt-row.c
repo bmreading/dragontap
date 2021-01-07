@@ -31,7 +31,8 @@ struct _DtRow
 
 G_DEFINE_TYPE (DtRow, dt_row, GTK_TYPE_LIST_BOX_ROW)
 
-enum {
+enum 
+{
     PROP_0,
     PROP_CONNECTION,
     PROP_LABEL_TEXT,
@@ -89,6 +90,7 @@ dt_row_set_property (GObject      *object,
         
         case PROP_ACTIVE_SWITCH:
             gtk_switch_set_active (self->on_off_switch, g_value_get_boolean (value));
+            break;
         
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
